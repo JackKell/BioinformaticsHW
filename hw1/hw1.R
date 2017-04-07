@@ -34,6 +34,9 @@ main = function() {
   drugGeneExpressionData = t(drugGeneExpressionData);
   drugCorrelation = correlationToDataFrame(cor(drugGeneExpressionData));
 
+  png("drugCorrelationHistogram.png");
+  hist(drugCorrelation[,3], xlab="Drug Correlation", main="Drug Correlation Histogram");
+
   medianDrugCorrelation = median(drugCorrelation[,3]);
   print(paste("Median Drug Correlation:", medianDrugCorrelation));
 
