@@ -38,35 +38,37 @@ main = function() {
   print(paste("Median Drug Correlation:", medianDrugCorrelation));
 
   # Get the top most positively correlated drugs
-  topPositivelyCorrelatedDrugs = drugCorrelation[order(drugCorrelation$Freq, decreasing=TRUE),][1:10,]
+  topPositivelyCorrelatedDrugs = drugCorrelation[order(drugCorrelation$Freq, decreasing=TRUE),][1:10,];
   rownames(topPositivelyCorrelatedDrugs) = NULL;
 
   topPositivelyCorelatedDrug1 = topPositivelyCorrelatedDrugs[1,1];
   topPositivelyCorelatedDrug2 = topPositivelyCorrelatedDrugs[1,2];
-  print(paste("Top Positively Corelated Drug Pair: (", topPositivelyCorelatedDrug1, ",", topPositivelyCorelatedDrug2, ")"));
+  topPositivelyCorrelatedDrugCor = topPositivelyCorrelatedDrugs[1,3];
+  print(paste("Top Positively Corelated Drug Pair: (", topPositivelyCorelatedDrug1, ",", topPositivelyCorelatedDrug2, ")", "with a correaltion of", topPositivelyCorrelatedDrugCor));
 
-  print("Top 10 Most Positively Correlated Drugs")
-  print(topPositivelyCorrelatedDrugs)
+  print("Top 10 Most Positively Correlated Drugs");
+  print(topPositivelyCorrelatedDrugs);
 
-  png("topPositivelyCorrelatedDrugs.png")
+  png("topPositivelyCorrelatedDrugs.png");
   plot(
-    drugGeneExpressionData[,topPositivelyCorelatedDrug1],
-    drugGeneExpressionData[,topPositivelyCorelatedDrug2],
+    drugGeneExpressionData[, topPositivelyCorelatedDrug1],
+    drugGeneExpressionData[, topPositivelyCorelatedDrug2],
     xlab=topPositivelyCorelatedDrug1,
     ylab=topPositivelyCorelatedDrug2,
-    main=paste(topPositivelyCorelatedDrug1, " over ", topPositivelyCorelatedDrug2)
-  )
+    main=paste(topPositivelyCorelatedDrug1, "over", topPositivelyCorelatedDrug2)
+  );
 
   # Get the top most negatively correlated drugs
-  topNegativelyCorrelatedDrugs = drugCorrelation[order(drugCorrelation$Freq, decreasing=FALSE),][1:10,]
+  topNegativelyCorrelatedDrugs = drugCorrelation[order(drugCorrelation$Freq, decreasing=FALSE),][1:10,];
   rownames(topNegativelyCorrelatedDrugs) = NULL;
 
   topNegativelyCorelatedDrug1 = topNegativelyCorrelatedDrugs[1,1];
   topNegativelyCorelatedDrug2 = topNegativelyCorrelatedDrugs[1,2];
+  topNegativelyCorrelatedDrugCor = topNegativelyCorrelatedDrugs[1,3];
 
-  print(paste("Top Negatively Corelated Drug Pair: (", topNegativelyCorelatedDrug1, ",", topNegativelyCorelatedDrug2, ")"));
+  print(paste("Top Negatively Corelated Drug Pair: (", topNegativelyCorelatedDrug1, ",", topNegativelyCorelatedDrug2, ")", "with a correlation of", topNegativelyCorrelatedDrugCor));
 
-  png("topNegativelyCorrelatedDrugs.png")
+  png("topNegativelyCorrelatedDrugs.png");
   plot(
     drugGeneExpressionData[, topNegativelyCorelatedDrug1],
     drugGeneExpressionData[, topNegativelyCorelatedDrug2],
@@ -75,8 +77,8 @@ main = function() {
     main=paste(topNegativelyCorelatedDrug1, " over ", topNegativelyCorelatedDrug2)
   )
 
-  print("Top 10 Most Negatively Correlated Drugs")
-  print(topNegativelyCorrelatedDrugs)
+  print("Top 10 Most Negatively Correlated Drugs");
+  print(topNegativelyCorrelatedDrugs);
 }
 
 main();
