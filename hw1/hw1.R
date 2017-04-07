@@ -23,6 +23,17 @@ correlationToDataFrame = function(correlationData) {
   return(correlationData);
 }
 
+# Returns most similar drug as dataFrame
+getMostSimilarDrug = function(correlationMatrix, drugName) {
+  # Filters correlationMatrix for given drugName
+  drugCorrelation = correlationMatrix[correlationMatrix[1] == drugName | correlationMatrix[2] == drugName, ];
+  # Takes absolute value of correlations
+  drugCorrelation[,3] = abs(drugCorrelation[,3]);
+  # Sort by correlation 
+  drugCorrelation = drugCorrelation[order(drugCorrelation[,3], decreasing=TRUE),][1,];
+  rownames(drugCorrelation) = NULL;
+  return(drugCorrelation);
+}
 
 # Main funciton to answer all of the question posed in the R_hw1-1.pdf file
 main = function() {
@@ -82,6 +93,16 @@ main = function() {
 
   print("Top 10 Most Negatively Correlated Drugs");
   print(topNegativelyCorrelatedDrugs);
+
+  clofarabineCorr = getMostSimilarDrug(drugCorrelation, "CLOFARABINE");
+  daunorubicinCorr = getMostSimilarDrug(drugCorrelation, "DAUNORUBICIN");
+  fludarabineCorr = getMostSimilarDrug(drugCorrelation, "FLUDARABINE");
+
+  print(clofarabineCorr);
+  print(daunorubicinCorr);
+  print(fludarabineCorr);
+
 }
+
 
 main();
