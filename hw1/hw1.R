@@ -102,9 +102,87 @@ questionOne = function(geneExpressionFile){
 main = function() {
   # data directories
   geneExpressionFile = "gene_expression_n438x978.txt";
-  adrHlgtFile = "ADRs_HLGT_n438c232.txt";
+  adrHlgtFile = "ADRs_HLGT_n438x232.txt";
 
-  questionOne(geneExpressionFile);
+  #questionOne(geneExpressionFile);
+
+  geneData = readTableWithRowNames(geneExpressionFile)[,1:50];
+  adrData = readTableWithRowNames(adrHlgtFile);
+
+  fmSideEffectSE = NA;
+  fmSE = .Machine$integer.max;
+  fmModelSE = NA;
+  bmSideEffectSE = NA;
+  bmSE = .Machine$integer.max;
+  bmModelSE = NA;
+
+  fmSideEffectAIC = NA;
+  fmSAIC = .Machine$integer.max;
+  fmModelAIC = NA;
+  bmSideEffectAIC = NA;
+  bmSAIC = .Machine$integer.max;
+  bmModelAIC = NA;
+
+  for(i in 1:232) {
+    sideEffectName = colnames(adrData)[i];
+    print(i);
+    print(sideEffectName);
+    nullModel = glm(adrData[,i] ~ 1, data = geneData, family = "binomial");
+    fullModel = glm(adrData[,i] ~ ., data = geneData, family = "binomial");
+    forwardModel = step(nullModel, scope = list(upper = fullModel), data = geneData, direction = "forward", trace = FALSE);
+    fmPrediction = predict(forwardModel, type = "response");
+    fmCm = table(adrData[,i], round(fmPrediction));
+    fmError = fmCm[2,1] + fmCm[1,2];
+    fmAIC = AIC(forwardModel);
+
+    backwardModel = step(fullModel, data = geneData, direction = "backward", trace = FALSE);
+    bmPrediction = predict(backwardModel, type = "response");
+    bmCm = table(adrData[,i], round(bmPrediction));
+    bmError = bmCm[2,1] + bmCm[1,2];
+    bmAIC = AIC(backwardModel);
+
+    if(fmSAIC > fmAIC) {
+      fmSideEffectAIC = sideEffectName;
+      fmSAIC = fmAIC;
+      fmModelAIC = forwardModel;
+    }
+
+    if(fmSE > fmError) {
+      fmSideEffectSE = sideEffectName;
+      fmSE = fmError;
+      fmModelSE = forwardModel;
+    }
+
+    if(bmSAIC > bmAIC) {
+      bmSideEffectAIC = sideEffectName;
+      bmSAIC = bmAIC;
+      bmModelAIC = backwardModel;
+    }
+
+    if(bmSE > bmError) {
+      bmSideEffectSE = sideEffectName;
+      bmSE = bmError;
+      bmModelSE = backwardModel;
+    }
+  }
+
+  print("Forward Model with lowest error:")
+  print(fmSideEffectSE);
+  print(paste("Error:", fmSE));
+  print(coef(fmModelSE));
+  print("backward Model with lowest error:")
+  print(bmSideEffectSE);
+  print(paste("Error:", bmSE));
+  print(coef(bmModelSE));
+
+  print("Forward Model with lowest AIC:")
+  print(fmSideEffectAIC);
+  print(paste("AIC:", fmSAIC));
+  print(coef(fmModelAIC));
+  print("Backward Model with lowest AIC:")
+  print(bmSideEffectAIC);
+  print(paste("AIC:", bmSAIC));
+  print(coef(bmModelAIC));
 
 }
 
