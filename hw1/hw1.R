@@ -29,18 +29,13 @@ getMostSimilarDrug = function(correlationMatrix, drugName) {
   drugCorrelation = correlationMatrix[correlationMatrix[1] == drugName | correlationMatrix[2] == drugName, ];
   # Takes absolute value of correlations
   drugCorrelation[,3] = abs(drugCorrelation[,3]);
-  # Sort by correlation 
+  # Sort by correlation
   drugCorrelation = drugCorrelation[order(drugCorrelation[,3], decreasing=TRUE),][1,];
   rownames(drugCorrelation) = NULL;
   return(drugCorrelation);
 }
 
-# Main funciton to answer all of the question posed in the R_hw1-1.pdf file
-main = function() {
-  # data directories
-  geneExpressionFile = "gene_expression_n438x978.txt";
-  adrHlgtFile = "ADRs_HLGT_n438c232.txt";
-
+questionOne = function(geneExpressionFile){
   drugGeneExpressionData = readTableWithRowNames(geneExpressionFile);
   drugGeneExpressionData = t(drugGeneExpressionData);
   drugCorrelation = correlationToDataFrame(cor(drugGeneExpressionData));
@@ -101,6 +96,15 @@ main = function() {
   print(clofarabineCorr);
   print(daunorubicinCorr);
   print(fludarabineCorr);
+}
+
+# Main funciton to answer all of the question posed in the R_hw1-1.pdf file
+main = function() {
+  # data directories
+  geneExpressionFile = "gene_expression_n438x978.txt";
+  adrHlgtFile = "ADRs_HLGT_n438c232.txt";
+
+  questionOne(geneExpressionFile);
 
 }
 
