@@ -35,7 +35,7 @@ getMostSimilarDrug = function(correlationMatrix, drugName) {
   return(drugCorrelation);
 }
 
-questionOne = function(geneExpressionFile){
+questionOne = function(geneExpressionFile) {
   drugGeneExpressionData = readTableWithRowNames(geneExpressionFile);
   drugGeneExpressionData = t(drugGeneExpressionData);
   drugCorrelation = correlationToDataFrame(cor(drugGeneExpressionData));
@@ -98,14 +98,7 @@ questionOne = function(geneExpressionFile){
   print(fludarabineCorr);
 }
 
-# Main funciton to answer all of the question posed in the R_hw1-1.pdf file
-main = function() {
-  # data directories
-  geneExpressionFile = "gene_expression_n438x978.txt";
-  adrHlgtFile = "ADRs_HLGT_n438x232.txt";
-
-  #questionOne(geneExpressionFile);
-
+questionTwo = function(geneExpressionFile, adrHlgtFile) {
   geneData = readTableWithRowNames(geneExpressionFile)[,1:50];
   adrData = readTableWithRowNames(adrHlgtFile);
 
@@ -122,23 +115,32 @@ main = function() {
   bmSideEffectAIC = NA;
   bmSAIC = .Machine$integer.max;
   bmModelAIC = NA;
-
+  warnings()
+  colnames = colnames(adrData)
   for(i in 1:232) {
-    sideEffectName = colnames(adrData)[i];
-    print(i);
-    print(sideEffectName);
+    sideEffectName = colnames[i];
     nullModel = glm(adrData[,i] ~ 1, data = geneData, family = "binomial");
     fullModel = glm(adrData[,i] ~ ., data = geneData, family = "binomial");
     forwardModel = step(nullModel, scope = list(upper = fullModel), data = geneData, direction = "forward", trace = FALSE);
     fmPrediction = predict(forwardModel, type = "response");
     fmCm = table(adrData[,i], round(fmPrediction));
-    fmError = fmCm[2,1] + fmCm[1,2];
+    fmError = 0;
+    if (ncol(fmCm) == 1) {
+      fmError = fmCm[2,1];
+    } else {
+      fmError = fmCm[2,1] + fmCm[1,2];
+    }
     fmAIC = AIC(forwardModel);
 
     backwardModel = step(fullModel, data = geneData, direction = "backward", trace = FALSE);
     bmPrediction = predict(backwardModel, type = "response");
     bmCm = table(adrData[,i], round(bmPrediction));
-    bmError = bmCm[2,1] + bmCm[1,2];
+    bmError = 0;
+    if (ncol(bmCm) == 1) {
+      bmError = bmCm[2,1];
+    } else {
+      bmError = bmCm[2,1] + bmCm[1,2];
+    }
     bmAIC = AIC(backwardModel);
 
     if(fmSAIC > fmAIC) {
@@ -183,6 +185,133 @@ main = function() {
   print(bmSideEffectAIC);
   print(paste("AIC:", bmSAIC));
   print(coef(bmModelAIC));
+}
+
+questionThree = function(geneExpressionFile, adrHlgtFile) {
+  geneData = readTableWithRowNames(geneExpressionFile)[,1:20];
+  adrData = readTableWithRowNames(adrHlgtFile);
+  kFolds = 10
+  repeats = 3
+  folds = cut(seq(1, nrow(geneData)), breaks=kFolds, labels=FALSE);
+
+
+  SideEffectWithAverageMinimumFmError = NA;
+  SideEffectWithAverageMinimumFmErrorValue = .Machine$integer.max;
+
+  SideEffectWithAverageMinimumBmError = NA;
+  SideEffectWithAverageMinimumBmErrorValue = .Machine$integer.max;
+
+  SideEffectWithAverageMinimumFmAIC = NA;
+  SideEffectWithAverageMinimumFmAICValue = .Machine$integer.max;
+
+  SideEffectWithAverageMinimumBmAIC = NA;
+  SideEffectWithAverageMinimumBmAICValue = .Machine$integer.max;
+
+  colnames = colnames(adrData)
+  for (i in 1:232) {
+    sideEffectName = colnames[i];
+
+    # Shuffle Data
+    geneData = geneData[sample(nrow(geneData)),];
+    fmAverageError = 0;
+    bmAverageError = 0;
+    fmAverageAIC = 0;
+    bmAverageAIC = 0;
+
+    for (j in 1:repeats) {
+      testIndexes = which(folds == j, arr.ind=TRUE);
+      testData = geneData[testIndexes, ];
+      trainData = geneData[-testIndexes, ];
+      adrTrain = adrData[rownames(trainData),];
+
+      nullModel = glm(adrTrain[,i] ~ 1, data = trainData, family = "binomial");
+      fullModel = glm(adrTrain[,i] ~ ., data = trainData, family = "binomial");
+
+      forwardModel = step(nullModel, scope = list(upper = fullModel), data = trainData, direction = "forward", trace = FALSE);
+      backwardModel = step(fullModel, data = trainData, direction = "backward", trace = FALSE);
+
+      fmPrediction = predict(forwardModel, type = "response");
+      bmPrediction = predict(backwardModel, type = "response");
+
+      fmCm = table(adrTrain[,i], round(fmPrediction));
+      bmCm = table(adrTrain[,i], round(bmPrediction));
+      if (nrow(fmCm) == 2) {
+        fmAverageError = fmAverageError + fmCm[2,1];
+      }
+
+      if (ncol(fmCm) == 2) {
+        fmAverageError = fmAverageError + fmCm[1,2];
+      }
+
+      if (nrow(bmCm) == 2) {
+        bmAverageError = bmAverageError + bmCm[2,1];
+      }
+
+      if (ncol(bmCm) == 2) {
+        bmAverageError = bmAverageError + bmCm[1,2];
+      }
+
+      fmAverageAIC = fmAverageAIC + AIC(forwardModel);
+      bmAverageAIC = bmAverageAIC + AIC(backwardModel);
+    }
+    fmAverageError = fmAverageError / repeats;
+    bmAverageError = bmAverageError / repeats;
+    fmAverageAIC = fmAverageAIC / repeats;
+    bmAverageAIC = bmAverageAIC / repeats;
+
+    if(SideEffectWithAverageMinimumFmAICValue > fmAverageAIC) {
+      SideEffectWithAverageMinimumFmAIC = sideEffectName;
+      SideEffectWithAverageMinimumFmAICValue = fmAverageAIC;
+    }
+
+    if(SideEffectWithAverageMinimumFmErrorValue > fmAverageError) {
+      SideEffectWithAverageMinimumFmError = sideEffectName;
+      SideEffectWithAverageMinimumFmErrorValue = fmAverageError;
+    }
+
+    if(SideEffectWithAverageMinimumBmAICValue > bmAverageAIC) {
+      SideEffectWithAverageMinimumBmAIC = sideEffectName;
+      SideEffectWithAverageMinimumBmAICValue = bmAverageAIC;
+    }
+
+    if(SideEffectWithAverageMinimumBmErrorValue > bmAverageError) {
+      SideEffectWithAverageMinimumBmError = sideEffectName;
+      SideEffectWithAverageMinimumBmErrorValue = bmAverageError;
+    }
+  }
+  print("Forward Model with lowest error:")
+  print(SideEffectWithAverageMinimumFmError);
+  print(paste("Average Error:", SideEffectWithAverageMinimumFmErrorValue));
+
+  print("Backward Model with lowest error:")
+  print(SideEffectWithAverageMinimumBmError);
+  print(paste("Average Error:", SideEffectWithAverageMinimumBmErrorValue));
+
+  print("Forward Model with lowest AIC:")
+  print(SideEffectWithAverageMinimumFmAIC);
+  print(paste("AIC:", SideEffectWithAverageMinimumFmAICValue));
+
+  print("Backward Model with lowest AIC:")
+  print(SideEffectWithAverageMinimumBmAIC);
+  print(paste("Average AIC:", SideEffectWithAverageMinimumBmAICValue));
+}
+
+confunctionMatrix = function(x, y) {
+  both = union(x, y);
+  inX = both %in% x;
+  inY = both %in% y;
+  return(table(inX, inY))
+}
+
+# Main funciton to answer all of the question posed in the R_hw1-1.pdf file
+main = function() {
+  # data directories
+  geneExpressionFile = "gene_expression_n438x978.txt";
+  adrHlgtFile = "ADRs_HLGT_n438x232.txt";
+
+  # questionOne(geneExpressionFile);
+  # questionTwo(geneExpressionFile, adrHlgtFile);
+  # questionThree(geneExpressionFile, adrHlgtFile);
 
 }
 
