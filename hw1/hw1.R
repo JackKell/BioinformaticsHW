@@ -35,11 +35,15 @@ getMostSimilarDrug = function(correlationMatrix, drugName) {
   return(drugCorrelation);
 }
 
+# Question One
 questionOne = function(geneExpressionFile) {
   drugGeneExpressionData = readTableWithRowNames(geneExpressionFile);
+  # Transpose the drugGeneExpressionData so that the drugs are the columns
   drugGeneExpressionData = t(drugGeneExpressionData);
+  # Get the drug correlation data frame
   drugCorrelation = correlationToDataFrame(cor(drugGeneExpressionData));
 
+  # Create a drug correlation histogram
   png("drugCorrelationHistogram.png");
   hist(drugCorrelation[,3], xlab="Drug Correlation", main="Drug Correlation Histogram");
 
@@ -98,7 +102,9 @@ questionOne = function(geneExpressionFile) {
   print(fludarabineCorr);
 }
 
+# Question Two
 questionTwo = function(geneExpressionFile, adrHlgtFile) {
+  # Get gene data with only the first 50 columns
   geneData = readTableWithRowNames(geneExpressionFile)[,1:50];
   adrData = readTableWithRowNames(adrHlgtFile);
 
@@ -115,12 +121,17 @@ questionTwo = function(geneExpressionFile, adrHlgtFile) {
   bmSideEffectAIC = NA;
   bmSAIC = .Machine$integer.max;
   bmModelAIC = NA;
-  warnings()
+
   colnames = colnames(adrData)
+  # iterate though all of the side effects
   for(i in 1:232) {
+    # curent side effect
     sideEffectName = colnames[i];
+
     nullModel = glm(adrData[,i] ~ 1, data = geneData, family = "binomial");
     fullModel = glm(adrData[,i] ~ ., data = geneData, family = "binomial");
+
+    # Build the forward model
     forwardModel = step(nullModel, scope = list(upper = fullModel), data = geneData, direction = "forward", trace = FALSE);
     fmPrediction = predict(forwardModel, type = "response");
     fmCm = table(adrData[,i], round(fmPrediction));
@@ -132,6 +143,7 @@ questionTwo = function(geneExpressionFile, adrHlgtFile) {
     }
     fmAIC = AIC(forwardModel);
 
+    # Build backward model
     backwardModel = step(fullModel, data = geneData, direction = "backward", trace = FALSE);
     bmPrediction = predict(backwardModel, type = "response");
     bmCm = table(adrData[,i], round(bmPrediction));
@@ -143,6 +155,7 @@ questionTwo = function(geneExpressionFile, adrHlgtFile) {
     }
     bmAIC = AIC(backwardModel);
 
+    # Determine if the current side effect has a better error rate or AIC than any previous models
     if(fmSAIC > fmAIC) {
       fmSideEffectAIC = sideEffectName;
       fmSAIC = fmAIC;
@@ -187,6 +200,7 @@ questionTwo = function(geneExpressionFile, adrHlgtFile) {
   print(coef(bmModelAIC));
 }
 
+# Question Three
 questionThree = function(geneExpressionFile, adrHlgtFile) {
   geneData = readTableWithRowNames(geneExpressionFile)[,1:20];
   adrData = readTableWithRowNames(adrHlgtFile);
@@ -219,9 +233,7 @@ questionThree = function(geneExpressionFile, adrHlgtFile) {
       print(paste(i, ":", r))
       # Shuffle Data
       geneData = geneData[sample(nrow(geneData)),];
-      # print(geneData)
-      temp = adrData[rownames(geneData),][i];
-      # print(adrData)
+      adr = adrData[rownames(geneData),][i];
 
       currentFmPredictions = c();
       currentBmPredictions = c();
@@ -229,13 +241,9 @@ questionThree = function(geneExpressionFile, adrHlgtFile) {
       for (k in 1:kFolds) {
         testIndexes = which(folds == k, arr.ind=TRUE);
         testData = geneData[testIndexes, ];
-        # print(testData)
         trainData = geneData[-testIndexes, ];
-        # print(trainData)
         adrTest = adrData[rownames(testData),][,i];
-        # print(adrTest)
         adrTrain = adrData[rownames(trainData),][,i];
-        # print(adrTrain)
 
         nullModel = glm(adrTrain ~ 1, data = trainData, family = "binomial");
         fullModel = glm(adrTrain ~ ., data = trainData, family = "binomial");
@@ -244,23 +252,13 @@ questionThree = function(geneExpressionFile, adrHlgtFile) {
         backwardModel = step(fullModel, data = trainData, direction = "backward", trace = FALSE);
 
         fmPrediction = as.integer(round(predict(forwardModel, testData, type = "response")));
-        # print(fmPrediction)
         bmPrediction = as.integer(round(predict(backwardModel, testData, type = "response")));
-        # print(bmPrediction)
 
         currentFmPredictions = c(currentFmPredictions, fmPrediction);
         currentBmPredictions = c(currentBmPredictions, bmPrediction);
-        # print(currentFmPredictions)
-        # print(currentBmPredictions)
-
-        # fmAverageAIC = fmAverageAIC + AIC(forwardModel);
-        # bmAverageAIC = bmAverageAIC + AIC(backwardModel);
       }
-      fmCm = table(temp[,1], currentFmPredictions);
-      bmCm = table(temp[,1], currentBmPredictions);
-
-      # print(fmCm)
-      # print(bmCm)
+      fmCm = table(adr[,1], currentFmPredictions);
+      bmCm = table(adr[,1], currentBmPredictions);
 
       if (nrow(fmCm) == 2) {
         fmAverageError = fmAverageError + fmCm[2,1];
@@ -277,15 +275,10 @@ questionThree = function(geneExpressionFile, adrHlgtFile) {
       if (ncol(bmCm) == 2) {
         bmAverageError = bmAverageError + bmCm[1,2];
       }
-
-      # print(fmAverageError)
-      # print(bmAverageError)
     }
 
     fmAverageError = fmAverageError / repeats;
     bmAverageError = bmAverageError / repeats;
-    # print(fmAverageError)
-    # print(bmAverageError)
     fmAverageAIC = fmAverageAIC / repeats;
     bmAverageAIC = bmAverageAIC / repeats;
 
@@ -316,21 +309,6 @@ questionThree = function(geneExpressionFile, adrHlgtFile) {
   print("Backward Model with lowest error:")
   print(SideEffectWithAverageMinimumBmError);
   print(paste("Average Error:", SideEffectWithAverageMinimumBmErrorValue));
-
-  # print("Forward Model with lowest AIC:")
-  # print(SideEffectWithAverageMinimumFmAIC);
-  # print(paste("AIC:", SideEffectWithAverageMinimumFmAICValue));
-  #
-  # print("Backward Model with lowest AIC:")
-  # print(SideEffectWithAverageMinimumBmAIC);
-  # print(paste("Average AIC:", SideEffectWithAverageMinimumBmAICValue));
-}
-
-confunctionMatrix = function(x, y) {
-  both = union(x, y);
-  inX = both %in% x;
-  inY = both %in% y;
-  return(table(inX, inY))
 }
 
 # Main funciton to answer all of the question posed in the R_hw1-1.pdf file
@@ -339,11 +317,9 @@ main = function() {
   geneExpressionFile = "gene_expression_n438x978.txt";
   adrHlgtFile = "ADRs_HLGT_n438x232.txt";
 
-  # questionOne(geneExpressionFile);
-  # questionTwo(geneExpressionFile, adrHlgtFile);
+  questionOne(geneExpressionFile);
+  questionTwo(geneExpressionFile, adrHlgtFile);
   questionThree(geneExpressionFile, adrHlgtFile);
-
 }
-
 
 main();
