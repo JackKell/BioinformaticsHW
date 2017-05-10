@@ -5,3 +5,4 @@ hw2/kmeans_sil.png
 test
 *.out
 *.ipynb_checkpoints
+*.png

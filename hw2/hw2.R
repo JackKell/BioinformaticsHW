@@ -18,9 +18,10 @@ questionOne = function() {
   print(data[1:4, 1:3])
 
   roughOutput = NULL
-  # Test all of the possible value of k from 10 to 435 incrementing by 10 to find a rough range of where the best cluster size is
+  # Test all of the possible values of k incrementing by a rough range to find where the best cluster size is in general
   stepSize = 20
-  roughClusterSizes = seq(stepSize, nrow(data), stepSize)
+  roughClusterSizes = seq(2, nrow(data), stepSize)
+  # roughClusterSizes = seq(2, 40, stepSize)
   # The number of trails done to get the averagered average silhouette value for the current groups size (k)
   trails = 3.0
   for (k in roughClusterSizes) {
@@ -42,10 +43,11 @@ questionOne = function() {
   print(roughOutput)
 
   # From the results in the output we find that the max is some where around
-  roughBestClusterSize = names(output)[which(output==max(output))]
-  print(roughBestClusterSize)
+  roughBestClusterSize = names(roughOutput)[which(roughOutput==max(roughOutput))]
+
+  # print(roughBestClusterSize)
   fineOutput = NULL
-  fineClusterSizes = seq(roughBestClusterSize - stepSize, roughBestClusterSize + stepSize)
+  fineClusterSizes = seq(2, 20)
   for (k in fineClusterSizes) {
     averageSilhouetteOnAverage = 0
     for (i in 1:trails) {
@@ -59,13 +61,17 @@ questionOne = function() {
     fineOutput = c(fineOutput, averageSilhouetteOnAverage)
   }
 
+  png ("kmeans_sil_fine.png")
+  plot (fineClusterSizes, fineOutput, type="l", main="The Average Silhouetee Per Cluster for a\nGiven Number of Clusters on Average", xlab="Number of Clusters", ylab="Average Silhouette Value Per Cluster On Average")
 
+  names(fineOutput) = fineClusterSizes
+  print(fineOutput)
 
-  kmeansResults = kmeans(data, 170)
+  kmeansResults = kmeans(data, 2)
   clusters = table(kmeansResults$cluster)
+  png("histtest.png")
+  plot(clusters)
   print(clusters)
-  print(sum(clusters))
-
 
 }
 
