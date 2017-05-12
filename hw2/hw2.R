@@ -21,7 +21,6 @@ questionOne = function() {
   # Test all of the possible values of k incrementing by a rough range to find where the best cluster size is in general
   stepSize = 20
   roughClusterSizes = seq(2, nrow(data), stepSize)
-  # roughClusterSizes = seq(2, 40, stepSize)
   # The number of trails done to get the averagered average silhouette value for the current groups size (k)
   trails = 3.0
   for (k in roughClusterSizes) {
@@ -135,7 +134,7 @@ questionTwo = function() {
 
 main = function() {
   set.seed(12345)
-  # questionOne()
+  questionOne()
   questionTwo()
 }
 
