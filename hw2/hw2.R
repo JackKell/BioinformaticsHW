@@ -117,16 +117,7 @@ questionTwo = function() {
       fp = length(currentCluster) - tp
       fn = length(currentGenes) - tp
       tn = universeSize - tp - fp - fn
-      # if (tn < 0) {
-      #   print("Something went very wrong here")
-      #   print(confusionMatrix)
-      #   print(currentCluster)
-      #   print(currentGenes)
-      #   next
-      # }
-      # print(length(currentGenes))
       confusionMatrix = matrix(c(tp, fn, fp, tn), nr=2, dimnames=list(c("DE", "notDE"), c("InGeneSet", "NotInGeneSet")))
-      # print(confusionMatrix)
       pvalue = fisher.test(confusionMatrix, alternative="greater")$p.value
       newOutputRow = c(clusterIndex, i, tp, fp, fn, tn, pvalue)
       output = rbind(output, newOutputRow)
