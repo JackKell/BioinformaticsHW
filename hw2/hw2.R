@@ -26,7 +26,6 @@ questionOne = function() {
   for (k in roughClusterSizes) {
     averageSilhouetteOnAverage = 0
     for (i in 1:trails) {
-      print(paste(k, i))
       currentKmeansResults = kmeans(data, k)
       currentSilhouetteValues = silhouette(currentKmeansResults$cluster, dist(data, method="euclidean"))
       averageSilhouetteValue = mean(currentSilhouetteValues[, "sil_width"])
@@ -50,7 +49,6 @@ questionOne = function() {
   for (k in fineClusterSizes) {
     averageSilhouetteOnAverage = 0
     for (i in 1:trails) {
-      print(paste(k, i))
       currentKmeansResults = kmeans(data, k)
       currentSilhouetteValues = silhouette(currentKmeansResults$cluster, dist(data, method="euclidean"))
       averageSilhouetteValue = mean(currentSilhouetteValues[, "sil_width"])
@@ -104,7 +102,6 @@ questionTwo = function() {
   con = file("gene_lists.txt",  open="r")
   output = NULL
   for (i in 1:5000) {
-    print(i)
     line = readLines(con, n=1)
     currentGenes = unlist(strsplit(line, "\t"))
     if (length(line) == 0) {
